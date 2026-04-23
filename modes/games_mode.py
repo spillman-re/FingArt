@@ -5,6 +5,7 @@ import random
 import pygame
 # Asegúrate de que la carpeta se llame exactamente FruitNinja (ojo mayúsculas)
 from .games.FruitNinja.game_logic import FruitNinjaGame
+from .games.bubbles.bubbles_bridge import BubblesGameBridge
 
 class GamesMode:
     def __init__(self, width=1280, height=720):
@@ -16,7 +17,9 @@ class GamesMode:
         
         self.active_game = None 
         self.menu_btn_pos = (20, 20, 130, 80)
+
         self.fruit_ninja = None
+        self.bubbles_game = None
 
     def update(self, img, lm_list, fingers):
         x1, y1 = lm_list[8][1], lm_list[8][2]
@@ -89,27 +92,49 @@ class GamesMode:
             cv2.circle(img, (cx+30, cy), 10, (0, 200, 0), -1)
 
     def run_game_logic(self, img, x, y, pinch, lm_list):
+        # ---------------------------------------------------------
+        # 1. FRUIT NINJA: Botón Central Superior
+        # ---------------------------------------------------------
         if self.active_game == "FRUIT NINJA":
             if self.fruit_ninja is None:
                 self.fruit_ninja = FruitNinjaGame(self.width, self.height)
-            
-            # CORRECCIÓN: Pasamos el lm_list completo a la lógica del juego
             img = self.fruit_ninja.update(img, lm_list, pinch)
             
-        exit_btn_pos = (560, 10, 720, 60) # x1, y1, x2, y2
-        # Botón salir (se mantiene el tuyo)
-        cv2.rectangle(img, (exit_btn_pos[0], exit_btn_pos[1]), 
-                      (exit_btn_pos[2], exit_btn_pos[3]), (0, 0, 200), -1)
-        cv2.putText(img, "SALIR", (exit_btn_pos[0] + 25, exit_btn_pos[1] + 35), 
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-        
-        # Lógica de detección de colisión para el nuevo botón
-        if exit_btn_pos[0] < x < exit_btn_pos[2] and \
-           exit_btn_pos[1] < y < exit_btn_pos[3] and pinch:
-            # Al salir, matamos la instancia del juego para liberar memoria y sonidos
-            if self.fruit_ninja:
-                pygame.mixer.music.stop()
-            self.active_game = None
-            self.fruit_ninja = None
+            # Dibujamos botón de salir específico para Fruit Ninja
+            exit_btn_pos = (560, 10, 720, 60)
+            cv2.rectangle(img, (exit_btn_pos[0], exit_btn_pos[1]), 
+                          (exit_btn_pos[2], exit_btn_pos[3]), (0, 0, 200), -1)
+            cv2.putText(img, "SALIR", (exit_btn_pos[0] + 35, exit_btn_pos[1] + 35), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
             
+            if exit_btn_pos[0] < x < exit_btn_pos[2] and \
+               exit_btn_pos[1] < y < exit_btn_pos[3] and pinch:
+                pygame.mixer.music.stop()
+                self.active_game = None
+                self.fruit_ninja = None
+
+        # ---------------------------------------------------------
+        # 2. BUBBLES: Sin botón extra (usa el del juego)
+        # ---------------------------------------------------------
+        elif self.active_game == "BUBBLES":
+            if self.bubbles_game is None:
+                self.bubbles_game = BubblesGameBridge(self.width, self.height)
+            
+            result = self.bubbles_game.update(img, lm_list, pinch)
+            
+            if isinstance(result, str) and result == "EXIT_TO_SELECTOR":
+                self.active_game = None
+                self.bubbles_game = None
+                return img
+            
+            img = result
+            # Nota: No dibujamos botón aquí porque Bubbles tiene su propio botón "MENU"
+
+        # ---------------------------------------------------------
+        # 3. OTROS JUEGOS (Ejemplo Flappy Bird en una esquina)
+        # ---------------------------------------------------------
+        elif self.active_game == "FLAPPY BIRD":
+            # Aquí podrías poner el botón en la esquina superior derecha por ejemplo
+            pass
+
         return img
