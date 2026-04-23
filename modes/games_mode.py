@@ -6,6 +6,7 @@ import pygame
 # Asegúrate de que la carpeta se llame exactamente FruitNinja (ojo mayúsculas)
 from .games.FruitNinja.game_logic import FruitNinjaGame
 from .games.bubbles.bubbles_bridge import BubblesGameBridge
+from .games.Snake.snake_logic import SnakeGame
 
 class GamesMode:
     def __init__(self, width=1280, height=720):
@@ -20,6 +21,7 @@ class GamesMode:
 
         self.fruit_ninja = None
         self.bubbles_game = None
+        self.snake_game = None
 
     def update(self, img, lm_list, fingers):
         x1, y1 = lm_list[8][1], lm_list[8][2]
@@ -93,14 +95,13 @@ class GamesMode:
 
     def run_game_logic(self, img, x, y, pinch, lm_list):
         # ---------------------------------------------------------
-        # 1. FRUIT NINJA: Botón Central Superior
+        # 1. FRUIT NINJA
         # ---------------------------------------------------------
         if self.active_game == "FRUIT NINJA":
             if self.fruit_ninja is None:
                 self.fruit_ninja = FruitNinjaGame(self.width, self.height)
             img = self.fruit_ninja.update(img, lm_list, pinch)
             
-            # Dibujamos botón de salir específico para Fruit Ninja
             exit_btn_pos = (560, 10, 720, 60)
             cv2.rectangle(img, (exit_btn_pos[0], exit_btn_pos[1]), 
                           (exit_btn_pos[2], exit_btn_pos[3]), (0, 0, 200), -1)
@@ -114,27 +115,43 @@ class GamesMode:
                 self.fruit_ninja = None
 
         # ---------------------------------------------------------
-        # 2. BUBBLES: Sin botón extra (usa el del juego)
+        # 2. BUBBLES
         # ---------------------------------------------------------
         elif self.active_game == "BUBBLES":
             if self.bubbles_game is None:
                 self.bubbles_game = BubblesGameBridge(self.width, self.height)
             
             result = self.bubbles_game.update(img, lm_list, pinch)
-            
             if isinstance(result, str) and result == "EXIT_TO_SELECTOR":
                 self.active_game = None
                 self.bubbles_game = None
                 return img
-            
             img = result
-            # Nota: No dibujamos botón aquí porque Bubbles tiene su propio botón "MENU"
 
         # ---------------------------------------------------------
-        # 3. OTROS JUEGOS (Ejemplo Flappy Bird en una esquina)
+        # 3. SNAKE (Corregido x1/y1 a x/y)
+        # ---------------------------------------------------------
+        elif self.active_game == "SNAKE":
+            if self.snake_game is None:
+                self.snake_game = SnakeGame(self.width, self.height)
+            img = self.snake_game.update(img, lm_list, pinch)
+            
+            exit_btn_pos = (560, 10, 720, 60)
+            cv2.rectangle(img, (exit_btn_pos[0], exit_btn_pos[1]), 
+                          (exit_btn_pos[2], exit_btn_pos[3]), (0, 0, 200), -1)
+            cv2.putText(img, "SALIR", (600, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            
+            # Aquí estaba el error, ahora usa 'x' y 'y'
+            if exit_btn_pos[0] < x < exit_btn_pos[2] and \
+               exit_btn_pos[1] < y < exit_btn_pos[3] and pinch:
+                self.active_game = None
+                pygame.mixer.music.stop()
+                self.snake_game = None
+
+        # ---------------------------------------------------------
+        # 4. FLAPPY BIRD
         # ---------------------------------------------------------
         elif self.active_game == "FLAPPY BIRD":
-            # Aquí podrías poner el botón en la esquina superior derecha por ejemplo
             pass
 
         return img
