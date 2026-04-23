@@ -7,6 +7,8 @@ import pygame
 from .games.FruitNinja.game_logic import FruitNinjaGame
 from .games.bubbles.bubbles_bridge import BubblesGameBridge
 from .games.Snake.snake_logic import SnakeGame
+from .games.flappy.flappy_logic import FlappyBirdGame
+
 
 class GamesMode:
     def __init__(self, width=1280, height=720):
@@ -22,6 +24,8 @@ class GamesMode:
         self.fruit_ninja = None
         self.bubbles_game = None
         self.snake_game = None
+        self.flappy_bird = None
+        self.last_pinch = False # Para detectar el flanco de subida (click)
 
     def update(self, img, lm_list, fingers):
         x1, y1 = lm_list[8][1], lm_list[8][2]
@@ -93,7 +97,10 @@ class GamesMode:
             cv2.line(img, (cx-30, cy), (cx+30, cy), (0, 255, 0), 8)
             cv2.circle(img, (cx+30, cy), 10, (0, 200, 0), -1)
 
-    def run_game_logic(self, img, x, y, pinch, lm_list):
+    def run_game_logic(self, img, x, y, pinch, lm_list):        
+        pinch_started = pinch and not self.last_pinch
+        self.last_pinch = pinch
+        
         # ---------------------------------------------------------
         # 1. FRUIT NINJA
         # ---------------------------------------------------------
@@ -152,6 +159,19 @@ class GamesMode:
         # 4. FLAPPY BIRD
         # ---------------------------------------------------------
         elif self.active_game == "FLAPPY BIRD":
-            pass
+            if self.flappy_bird is None:
+                self.flappy_bird = FlappyBirdGame(self.width, self.height)
+            
+            # Pasamos todos los datos necesarios
+            img = self.flappy_bird.update(img, lm_list, pinch, pinch_started)
+            
+            # Botón SALIR (Dinamismo: Esquina superior derecha para Flappy)
+            exit_btn_pos = (self.width - 150, 10, self.width - 20, 60)
+            cv2.rectangle(img, (exit_btn_pos[0], exit_btn_pos[1]), (exit_btn_pos[2], exit_btn_pos[3]), (0, 0, 200), -1)
+            cv2.putText(img, "SALIR", (exit_btn_pos[0]+20, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            
+            if exit_btn_pos[0] < x < exit_btn_pos[2] and exit_btn_pos[1] < y < exit_btn_pos[3] and pinch:
+                self.active_game = None
+                self.flappy_bird = None
 
         return img
