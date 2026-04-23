@@ -8,6 +8,7 @@ from modules.ui_manager import UIManager
 from modes.free_paint import FreePaintMode
 from modes.free_paint import FreePaintMode
 from modes.generative_art import GenerativeArtMode # <--- NUEVO
+from modes.games_mode import GamesMode
 
 def main():
     cameras = get_available_cameras()
@@ -24,9 +25,10 @@ def main():
     
     paint_mode = FreePaintMode()
     art_mode = GenerativeArtMode() 
+    games_mode = GamesMode()
 
     current_mode = paint_mode
-    menu_active = False
+    menu_active = True
 
     while True:
         success, img = cap.read()
@@ -59,7 +61,9 @@ def main():
                         art_mode.canvas = np.zeros((720, 1280, 3), np.uint8)
                         print("Modo: Arte Generativo")
                     elif selection == 2:
-                        print("Modo Juegos: Próximamente")
+                        print("Modo: Minijuegos")
+                        current_mode = games_mode
+
                     menu_active = False
             else:
                 # --- SOLUCIÓN AL ERROR ---
