@@ -184,8 +184,10 @@ class FruitNinjaGame:
                     z.exploded = True
                     self.lives -= 1
                     self.explosion_sound.play()
+                    win.fill((255, 0, 0))
+                    pygame.time.delay(120)
                     if self.lives <= 0: self.game_over = True
-                elif not z.is_bomb:
+                elif not z.is_bomb and z.pic in [self.berry[0], self.watermelon[0], self.orange[0]]:
                     self.score += 1
                     random.choice(self.slice_sounds).play()
                     # Lógica de partición (tus if de berry, orange, watermelon)
