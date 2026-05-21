@@ -16,7 +16,7 @@ def main():
         print("Error: No se detectó ninguna cámara.")
         return
 
-    cap = cv2.VideoCapture(cameras[1])
+    cap = cv2.VideoCapture(cameras[0])
     cap.set(3, 1280)
     cap.set(4, 720)
     

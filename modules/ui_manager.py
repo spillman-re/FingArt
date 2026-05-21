@@ -36,14 +36,14 @@ class UIManager:
 
         # --- CARGA DEL LOGO ---
         self.logo = None
-        if os.path.exists("assets/logo.png"):
-            raw_logo = pygame.image.load("assets/logo.png")
+        if os.path.exists("assets/LogoCir.png"):
+            raw_logo = pygame.image.load("assets/LogoCir.png")
             # Convert_alpha solo funciona si el modo de pantalla ya fue seteado en main.py
             if pygame.display.get_surface():
                 self.logo = raw_logo.convert_alpha()
             else:
                 self.logo = raw_logo
-            self.logo = pygame.transform.scale(self.logo, (120, 120))
+            self.logo = pygame.transform.scale(self.logo, (400, 400))
 
         # --- FUENTES ---
         # Usamos fuentes del sistema para asegurar compatibilidad
@@ -66,7 +66,7 @@ class UIManager:
 
         # 3. Dibujar Logo y Título con resplandor
         if self.logo:
-            surface.blit(self.logo, (self.width//2 - 340, 40))
+            surface.blit(self.logo, (self.width//2 - 450, -85))
         
         title_surf = self.font_title.render("FingMix", True, (0, 255, 255))
         surface.blit(title_surf, (self.width//2 - 130, 50))
@@ -94,11 +94,36 @@ class UIManager:
                 self.hover_active[i] = False
 
             # --- Colores y Efectos Visuales ---
-            # Color cian para reposo/hover, verde para click
-            main_color = (0, 255, 255) if not is_click else (0, 255, 0)
+            # Colores base para los botones
+            colors = [
+                (180, 140, 255),  # PIZARRA (morado)
+                (255, 170, 80),   # ARTE (naranja)
+                (255, 100, 100)   # JUEGOS (rojo)
+            ]
             
+            base_color = colors[i]
+
+            # Color base
+            main_color = base_color
+
+            # Hover → más brillante
             if is_hover:
-                # Dibujar resplandor neón (múltiples círculos con alfa decreciente)
+                main_color = (
+                    min(base_color[0] + 40, 255),
+                    min(base_color[1] + 40, 255),
+                    min(base_color[2] + 40, 255)
+                )
+
+            # Click → aún más brillante
+            if is_click:
+                main_color = (
+                    min(base_color[0] + 70, 255),
+                    min(base_color[1] + 70, 255),
+                    min(base_color[2] + 70, 255)
+                )
+
+            if is_hover:
+                # Dibujar resplandor (múltiples círculos con alfa decreciente)
                 for r in range(1, 12):
                     glow_alpha = 120 // r
                     pygame.draw.circle(surface, (*main_color, glow_alpha), (cx, cy), self.radius + r, 2)
