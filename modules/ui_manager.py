@@ -29,8 +29,8 @@ class UIManager:
             
             # Música de fondo en loop
             #pygame.mixer.music.load("assets/sounds/menu_bg.mp3")
-            pygame.mixer.music.set_volume(0.1)
-            pygame.mixer.music.play(-1)
+            #pygame.mixer.music.set_volume(0.1)
+            #pygame.mixer.music.play(-1)
         except Exception as e:
             print(f"Aviso: No se pudieron cargar los sonidos. Verifique la carpeta assets/sounds/. Error: {e}")
 
