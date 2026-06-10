@@ -26,6 +26,14 @@ class GamesMode:
         self.snake_game = None
         self.flappy_bird = None
         self.last_pinch = False # Para detectar el flanco de subida (click)
+        self.particles = []
+
+        self.game_icons = [
+            cv2.imread("assets/FruitLogoF.png", cv2.IMREAD_UNCHANGED),
+            cv2.imread("assets/BubbleLogoF.png", cv2.IMREAD_UNCHANGED),
+            cv2.imread("assets/FlappyLogoF.png", cv2.IMREAD_UNCHANGED),
+            cv2.imread("assets/SnakeLogoF.png", cv2.IMREAD_UNCHANGED)
+        ]
 
     def update(self, img, lm_list, fingers):
         x1, y1 = lm_list[8][1], lm_list[8][2]
@@ -75,27 +83,99 @@ class GamesMode:
             else:
                 color, thick = self.colors[i], 2
 
-            cv2.circle(img, center, radius, color, thick)
-            cv2.circle(img, center, radius + 10, color, 1)
-            self._draw_game_icon(img, i, center)
+            hover = dist < radius
+
+            clicked = hover and pinch
+            if clicked:
+
+                for _ in range(15):
+
+                    self.particles.append({
+
+                    "x": center[0],
+                    "y": center[1],
+
+                    "dx": random.randint(-8, 8),
+                    "dy": random.randint(-8, 8),
+
+                    "life": random.randint(15, 30),
+
+                    "color": self.colors[i]
+                })
+
+            self._draw_game_icon(img, i, center, hover, clicked)
             cv2.putText(img, name, (center[0] - 70, center[1] + 130),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        self.draw_particles(img)
         return img, selected
 
-    def _draw_game_icon(self, img, idx, center):
-        cx, cy = center
-        if idx == 0: # Fruit Ninja
-            cv2.ellipse(img, (cx, cy), (40, 30), 0, 0, 360, (0, 100, 0), -1)
-            cv2.ellipse(img, (cx, cy), (30, 20), 0, 0, 360, (0, 0, 255), -1)
-        elif idx == 1: # Bubbles
-            cv2.circle(img, (cx-15, cy-15), 30, (255, 255, 255), 2)
-            cv2.circle(img, (cx+15, cy+15), 20, (255, 255, 255), 1)
-        elif idx == 2: # Flappy Bird
-            cv2.circle(img, (cx, cy), 25, (0, 255, 255), -1)
-            cv2.rectangle(img, (cx+15, cy-5), (cx+35, cy+5), (0, 165, 255), -1)
-        elif idx == 3: # Snake
-            cv2.line(img, (cx-30, cy), (cx+30, cy), (0, 255, 0), 8)
-            cv2.circle(img, (cx+30, cy), 10, (0, 200, 0), -1)
+    def _draw_game_icon(self, img, idx, center, hover = False, clicked = False):
+        
+        icon = self.game_icons[idx]
+
+        # -----------------------------
+        # EFECTO HOVER
+        # -----------------------------
+
+        if clicked:
+            size = 440
+        elif hover:
+            size = 420
+        else:
+            size = 400
+
+        icon = cv2.resize(icon, (size, size))
+
+        b, g, r, a = cv2.split(icon)
+
+        overlay = cv2.merge((b, g, r))
+
+        x = center[0] - size // 2
+        y = center[1] - size // 2
+
+        mask = a / 255.0
+
+        h, w = overlay.shape[:2]
+
+        # Evitar errores fuera de pantalla
+        if y < 0 or x < 0 or y+h > img.shape[0] or x+w > img.shape[1]:
+            return
+
+        roi = img[y:y+h, x:x+w]
+
+        # -----------------------------
+        # MEZCLA PNG
+        # -----------------------------
+
+        for c in range(3):
+            roi[:, :, c] = (
+            overlay[:, :, c] * mask +
+            roi[:, :, c] * (1 - mask)
+        )
+
+        img[y:y+h, x:x+w] = roi
+
+
+    def draw_particles(self, img):
+
+        for p in self.particles[:]:
+
+            p["x"] += p["dx"]
+            p["y"] += p["dy"]
+
+            p["life"] -= 1
+
+            cv2.circle(
+                img,
+                (int(p["x"]), int(p["y"])),
+                4,
+                p["color"],
+                -1
+            )
+
+            if p["life"] <= 0:
+                self.particles.remove(p)
+
 
     def run_game_logic(self, img, x, y, pinch, lm_list):        
         pinch_started = pinch and not self.last_pinch
